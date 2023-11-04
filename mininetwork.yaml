@@ -21,19 +21,33 @@ Resources:
       AvailabilityZone: 'eu-west-1b'
       CidrBlock: '10.0.1.0/24'
 
+  PublicSubnetC:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref miniVPC
+      AvailabilityZone: 'eu-west-1c'
+      CidrBlock: '10.0.2.0/24'
+
   PrivateSubnetA:
     Type: 'AWS::EC2::Subnet'
     Properties:
       VpcId: !Ref miniVPC
       AvailabilityZone: 'eu-west-1a'
-      CidrBlock: '10.0.2.0/24'
+      CidrBlock: '10.0.3.0/24'
 
   PrivateSubnetB:
     Type: 'AWS::EC2::Subnet'
     Properties:
       VpcId: !Ref miniVPC
       AvailabilityZone: 'eu-west-1b'
-      CidrBlock: '10.0.3.0/24'
+      CidrBlock: '10.0.4.0/24'
+
+  PrivateSubnetC:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref miniVPC
+      AvailabilityZone: 'eu-west-1c'
+      CidrBlock: '10.0.5.0/24'
 
   InternetGateway:
     Type: 'AWS::EC2::InternetGateway'
@@ -66,6 +80,12 @@ Resources:
       SubnetId: !Ref PublicSubnetB
       RouteTableId: !Ref RouteTablePublic
 
+  RouteTableAssociationPublicC:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnetC
+      RouteTableId: !Ref RouteTablePublic
+
   RouteTableAssociationPrivateA:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
@@ -76,6 +96,12 @@ Resources:
     Type: 'AWS::EC2::SubnetRouteTableAssociation'
     Properties:
       SubnetId: !Ref PrivateSubnetB
+      RouteTableId: !Ref RouteTablePrivate
+
+  RouteTableAssociationPrivateC:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PrivateSubnetC
       RouteTableId: !Ref RouteTablePrivate
 
   SecurityGroup:
@@ -101,7 +127,7 @@ Resources:
         - !GetAtt SecurityGroup.GroupId
       SubnetId: !Ref PublicSubnetA
       KeyName: 'mininetwork-ssh-key' 
-      ImageId: 'ami-0694d931cee176e7d' 
+      ImageId: 'ami-0694d931cee176e7d'
 
   EC2InstanceF:
     Type: 'AWS::EC2::Instance'
@@ -110,6 +136,26 @@ Resources:
       SecurityGroupIds:
         - !GetAtt SecurityGroup.GroupId
       SubnetId: !Ref PrivateSubnetA
+      KeyName: 'mininetwork-ssh-key' 
+      ImageId: 'ami-0694d931cee176e7d'
+
+  EC2InstanceA:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: 't2.micro'
+      SecurityGroupIds:
+        - !GetAtt SecurityGroup.GroupId
+      SubnetId: !Ref PublicSubnetB
+      KeyName: 'mininetwork-ssh-key' 
+      ImageId: 'ami-0694d931cee176e7d'
+
+  EC2InstanceB:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: 't2.micro'
+      SecurityGroupIds:
+        - !GetAtt SecurityGroup.GroupId
+      SubnetId: !Ref PrivateSubnetB
       KeyName: 'mininetwork-ssh-key' 
       ImageId: 'ami-0694d931cee176e7d'
 
@@ -122,6 +168,10 @@ Outputs:
     Description: 'public subnet B of mini-network'
     Value: !Ref PublicSubnetB
 
+  PublicSubnetCId:
+    Description: 'public subnet C of mini-network'
+    Value: !Ref PublicSubnetC
+
   PrivateSubnetAId:
     Description: 'private subnet A of mini-network'
     Value: !Ref PrivateSubnetA
@@ -129,3 +179,7 @@ Outputs:
   PrivateSubnetBId:
     Description: 'private subnet B of mini-network'
     Value: !Ref PrivateSubnetB
+
+  PrivateSubnetCId:
+    Description: 'private subnet C of mini-network'
+    Value: !Ref PrivateSubnetC
