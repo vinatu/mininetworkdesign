@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Creating a mini network design.
 
 Resources:
-  miniVPC:
+  MNVPC:
     Type: 'AWS::EC2::VPC'
     Properties:
       CidrBlock: '10.0.0.0/16'
@@ -10,44 +10,44 @@ Resources:
   PublicSubnetA:
     Type: 'AWS::EC2::Subnet'
     Properties:
-      VpcId: !Ref miniVPC
+      VpcId: !Ref MNVPC
       AvailabilityZone: 'eu-west-1a'
       CidrBlock: '10.0.0.0/24'
+      MapPublicIpOnLaunch: true  # Assign public IPs
+      Tags:
+        - Key: 'Name'
+          Value: 'Public Subnet A'
 
   PublicSubnetB:
     Type: 'AWS::EC2::Subnet'
     Properties:
-      VpcId: !Ref miniVPC
+      VpcId: !Ref MNVPC
       AvailabilityZone: 'eu-west-1b'
       CidrBlock: '10.0.1.0/24'
-
-  PublicSubnetC:
-    Type: 'AWS::EC2::Subnet'
-    Properties:
-      VpcId: !Ref miniVPC
-      AvailabilityZone: 'eu-west-1c'
-      CidrBlock: '10.0.2.0/24'
+      MapPublicIpOnLaunch: true  # Assign public IPs
+      Tags:
+        - Key: 'Name'
+          Value: 'Public Subnet B'
 
   PrivateSubnetA:
     Type: 'AWS::EC2::Subnet'
     Properties:
-      VpcId: !Ref miniVPC
+      VpcId: !Ref MNVPC
       AvailabilityZone: 'eu-west-1a'
-      CidrBlock: '10.0.3.0/24'
+      CidrBlock: '10.0.2.0/24'
+      Tags:
+        - Key: 'Name'
+          Value: 'Private Subnet A'
 
   PrivateSubnetB:
     Type: 'AWS::EC2::Subnet'
     Properties:
-      VpcId: !Ref miniVPC
+      VpcId: !Ref MNVPC
       AvailabilityZone: 'eu-west-1b'
-      CidrBlock: '10.0.4.0/24'
-
-  PrivateSubnetC:
-    Type: 'AWS::EC2::Subnet'
-    Properties:
-      VpcId: !Ref miniVPC
-      AvailabilityZone: 'eu-west-1c'
-      CidrBlock: '10.0.5.0/24'
+      CidrBlock: '10.0.3.0/24'
+      Tags:
+        - Key: 'Name'
+          Value: 'Private Subnet B'
 
   InternetGateway:
     Type: 'AWS::EC2::InternetGateway'
@@ -55,60 +55,16 @@ Resources:
   AttachGateway:
     Type: 'AWS::EC2::VPCGatewayAttachment'
     Properties:
-      VpcId: !Ref miniVPC
+      VpcId: !Ref MNVPC
       InternetGatewayId: !Ref InternetGateway
 
-  RouteTablePublic:
-    Type: 'AWS::EC2::RouteTable'
-    Properties:
-      VpcId: !Ref miniVPC
-
-  RouteTablePrivate:
-    Type: 'AWS::EC2::RouteTable'
-    Properties:
-      VpcId: !Ref miniVPC
-
-  RouteTableAssociationPublicA:
-    Type: 'AWS::EC2::SubnetRouteTableAssociation'
-    Properties:
-      SubnetId: !Ref PublicSubnetA
-      RouteTableId: !Ref RouteTablePublic
-
-  RouteTableAssociationPublicB:
-    Type: 'AWS::EC2::SubnetRouteTableAssociation'
-    Properties:
-      SubnetId: !Ref PublicSubnetB
-      RouteTableId: !Ref RouteTablePublic
-
-  RouteTableAssociationPublicC:
-    Type: 'AWS::EC2::SubnetRouteTableAssociation'
-    Properties:
-      SubnetId: !Ref PublicSubnetC
-      RouteTableId: !Ref RouteTablePublic
-
-  RouteTableAssociationPrivateA:
-    Type: 'AWS::EC2::SubnetRouteTableAssociation'
-    Properties:
-      SubnetId: !Ref PrivateSubnetA
-      RouteTableId: !Ref RouteTablePrivate
-
-  RouteTableAssociationPrivateB:
-    Type: 'AWS::EC2::SubnetRouteTableAssociation'
-    Properties:
-      SubnetId: !Ref PrivateSubnetB
-      RouteTableId: !Ref RouteTablePrivate
-
-  RouteTableAssociationPrivateC:
-    Type: 'AWS::EC2::SubnetRouteTableAssociation'
-    Properties:
-      SubnetId: !Ref PrivateSubnetC
-      RouteTableId: !Ref RouteTablePrivate
+  # Define your route tables and associations as before
 
   SecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
       GroupDescription: 'Allow SSH and HTTP traffic'
-      VpcId: !Ref miniVPC
+      VpcId: !Ref MNVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -123,54 +79,42 @@ Resources:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: 't2.micro'
-      SecurityGroupIds:
-        - !GetAtt SecurityGroup.GroupId
       SubnetId: !Ref PublicSubnetA
-      KeyName: 'mininetwork-ssh-key' 
-      ImageId: 'ami-0694d931cee176e7d'
-
-  EC2InstanceF:
-    Type: 'AWS::EC2::Instance'
-    Properties:
-      InstanceType: 't2.micro'
-      SecurityGroupIds:
-        - !GetAtt SecurityGroup.GroupId
-      SubnetId: !Ref PrivateSubnetA
-      KeyName: 'mininetwork-ssh-key' 
+      KeyName: 'mininetwork-ssh-key'
       ImageId: 'ami-0694d931cee176e7d'
 
   EC2InstanceA:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: 't2.micro'
-      SecurityGroupIds:
-        - !GetAtt SecurityGroup.GroupId
-      SubnetId: !Ref PublicSubnetB
-      KeyName: 'mininetwork-ssh-key' 
-      ImageId: 'ami-0694d931cee176e7d'
+      SubnetId: !Ref PrivateSubnetA
+      KeyName: 'mininetwork-ssh-key'
+      ImageId: 'ami-0694d931cee176e7d' 
 
   EC2InstanceB:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: 't2.micro'
-      SecurityGroupIds:
-        - !GetAtt SecurityGroup.GroupId
+      SubnetId: !Ref PublicSubnetB
+      KeyName: 'mininetwork-ssh-key'
+      ImageId: 'ami-0694d931cee176e7d'      
+
+  EC2InstanceF:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: 't2.micro'
       SubnetId: !Ref PrivateSubnetB
-      KeyName: 'mininetwork-ssh-key' 
+      KeyName: 'mininetwork-ssh-key'
       ImageId: 'ami-0694d931cee176e7d'
 
 Outputs:
   PublicSubnetAId:
-    Description: 'public subnet A of mini-network '
+    Description: 'public subnet A of mini-network'
     Value: !Ref PublicSubnetA
 
   PublicSubnetBId:
     Description: 'public subnet B of mini-network'
     Value: !Ref PublicSubnetB
-
-  PublicSubnetCId:
-    Description: 'public subnet C of mini-network'
-    Value: !Ref PublicSubnetC
 
   PrivateSubnetAId:
     Description: 'private subnet A of mini-network'
@@ -179,7 +123,3 @@ Outputs:
   PrivateSubnetBId:
     Description: 'private subnet B of mini-network'
     Value: !Ref PrivateSubnetB
-
-  PrivateSubnetCId:
-    Description: 'private subnet C of mini-network'
-    Value: !Ref PrivateSubnetC
