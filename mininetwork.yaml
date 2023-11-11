@@ -6,6 +6,8 @@ Resources:
     Type: 'AWS::EC2::VPC'
     Properties:
       CidrBlock: '10.0.0.0/16'
+      EnableDnsSupport: true   # Enable DNS resolution
+      EnableDnsHostnames: true # Enable DNS hostnames
 
   PublicSubnetA:
     Type: 'AWS::EC2::Subnet'
@@ -179,28 +181,36 @@ Resources:
       Egress: true
       CidrBlock: '0.0.0.0/0'      
 
-  SecurityGroup:
+  SecurityGroupPublic:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: 'Allow SSH and HTTP traffic'
+      GroupDescription: 'Allow SSH and HTTP traffic for Public Instances'
       VpcId: !Ref MNVPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: '0.0.0.0/0'  # This will allow SSH connection from anywhere
+          CidrIp: '0.0.0.0/0'  # Allow SSH from anywhere
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          CidrIp: '0.0.0.0/0'  # This will allow HTTP connection from anywhere
+          CidrIp: '0.0.0.0/0'  # Allow HTTP from anywhere
+
+  SecurityGroupPrivate:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Allow SSH traffic for Private Instances'
+      VpcId: !Ref MNVPC
+      SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: '10.0.2.0/24'  # will allow SSH from PrivateSubnetA
+          CidrIp: '10.0.2.0/24'  # Allow SSH from PrivateSubnetA
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: '10.0.3.0/24'  # will allow SSH from PrivateSubnetB
+          CidrIp: '10.0.3.0/24'  # Allow SSH from PrivateSubnetB
+
   #EC2 instances
   EC2InstanceJ:
     Type: 'AWS::EC2::Instance'
