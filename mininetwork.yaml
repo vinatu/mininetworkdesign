@@ -131,6 +131,21 @@ Resources:
       SubnetId: !Ref PrivateSubnetB
       RouteTableId: !Ref RouteTablePrivateB
 
+  RouteToInternetGatewayA:    #internet gateway to public 
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref RouteTablePublicA
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref InternetGateway
+
+  RouteToInternetGatewayB:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref RouteTablePublicB
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref InternetGateway
+
+
   NetworkAclPublic:
     Type: 'AWS::EC2::NetworkAcl'
     Properties:
@@ -205,44 +220,66 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: '10.0.2.0/24'  # Allow SSH from PrivateSubnetA
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: '10.0.3.0/24'  # Allow SSH from PrivateSubnetB
+          SourceSecurityGroupId: !Ref SecurityGroupPublic  # Allow SSH from SecurityGroupPublic
 
   #EC2 instances
   EC2InstanceJ:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: 't2.micro'
-      SubnetId: !Ref PublicSubnetA
+      ImageId: ami-0694d931cee176e7d
       KeyName: 'mininetwork-ssh-key'
-      ImageId: 'ami-0694d931cee176e7d'
+      NetworkInterfaces:
+        - GroupSet:
+           - !Ref SecurityGroupPublic
+          SubnetId: !Ref PublicSubnetA
+          DeviceIndex: 0
+      
 
   EC2InstanceA:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: 't2.micro'
-      SubnetId: !Ref PrivateSubnetA
       KeyName: 'mininetwork-ssh-key'
       ImageId: 'ami-0694d931cee176e7d' 
+      NetworkInterfaces:
+        - GroupSet:
+            - !Ref SecurityGroupPrivate
+          SubnetId: !Ref PrivateSubnetA
+          DeviceIndex: 0
+      UserData:
+        Fn::Base64: !Sub |                  # added sql 
+          #!/bin/bash
+          yum update -y
+          yum install -y mysql-server
+          service mysqld start
+          mysql -e "CREATE DATABASE mydatabase;"
+          # You might want to add additional commands to create tables, users, etc.
+
 
   EC2InstanceB:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: 't2.micro'
-      SubnetId: !Ref PublicSubnetB
       KeyName: 'mininetwork-ssh-key'
-      ImageId: 'ami-0694d931cee176e7d'      
+      ImageId: 'ami-0694d931cee176e7d'  
+      NetworkInterfaces:
+        - GroupSet:
+           - !Ref SecurityGroupPrivate
+          SubnetId: !Ref PrivateSubnetB
+          DeviceIndex: 0    
 
   EC2InstanceF:
     Type: 'AWS::EC2::Instance'
     Properties:
       InstanceType: 't2.micro'
-      SubnetId: !Ref PrivateSubnetB
       KeyName: 'mininetwork-ssh-key'
       ImageId: 'ami-0694d931cee176e7d'
+      NetworkInterfaces:
+        - GroupSet:
+          - !Ref SecurityGroupPublic
+          SubnetId: !Ref PublicSubnetA
+          DeviceIndex: 0     
 
   RouteToNATA:
     Type: 'AWS::EC2::Route'
